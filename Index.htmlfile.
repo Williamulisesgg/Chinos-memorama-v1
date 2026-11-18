@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4CAF50">
+  <title>Chino's Memorama</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1e1e2f;
+      color: white;
+      margin: 0;
+      padding: 16px;
+      text-align: center;
+      user-select: none;
+      min-height: 100vh;
+    }
+    h1 { font-size: 1.4rem; margin: 8px 0 16px; }
+    h2 { font-size: 1.1rem; margin: 0 0 12px; color: #FFD700; }
+
+    /* ============ BIENVENIDA ============ */
+    #bienvenida {
+      position: fixed;
+      inset: 0;
+      background: #555;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.8s ease;
+      text-align: center;
+      padding: 20px;
+    }
+    #bienvenida.oculto { opacity: 0; pointer-events: none; }
+    #bienvenida h1 {
+      font-size: 2rem;
+      color: #fff;
+      margin: 0;
+      line-height: 1.3;
+      animation: fadeInUp 0.9s ease;
+    }
+    #bienvenida p {
+      font-size: 1rem;
+      color: #ddd;
+      margin-top: 14px;
+      animation: fadeInUp 1s ease 0.3s backwards;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============ MENÚ ============ */
+    #menu { max-width: 420px; margin: 0 auto; }
+    .seccion {
+      background: #2a2a3e;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .seccion label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    .opciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .opciones button {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #3a3a52;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .opciones button.activo {
+      border-color: #FFD700;
+      background: #4a4a6a;
+    }
+
+    #rngParejas {
+      width: 100%;
+      accent-color: #4CAF50;
+      height: 6px;
+    }
+    .rango-etiquetas {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-top: 6px;
+    }
+    #numParejasDisplay {
+      color: #FFD700;
+      font-size: 1.1rem;
+      font-weight: 900;
+    }
+    #estimadoTiempo {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-top: 6px;
+    }
+
+    /* Interruptor */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #3a3a52;
+      border-radius: 28px;
+      transition: 0.3s;
+    }
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .slider { background: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(24px); }
+
+    /* Colores */
+    .colores { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+    .color-btn.activo { border-color: #FFD700; transform: scale(1.1); }
+
+    /* Texturas */
+    .texturas { display: flex; gap: 10px; flex-wrap: wrap; }
+    .textura-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+    .textura-btn.activo { border-color: #FFD700; transform: scale(1.05); }
+
+    /* Inputs */
+    #inputUrlReverso, #txtUrlsImagenes {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #555;
+      background: #1a1a2a;
+      color: white;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    #txtUrlsImagenes {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.4;
+    }
+    .ayuda {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin: 6px 0 0;
+      line-height: 1.3;
+    }
+    #contadorUrls {
+      font-size: 0.85rem;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    #btnEmpezar {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    #btnEmpezar:active { transform: scale(0.98); }
+
+    /* ============ JUEGO ============ */
+    #juego { display: none; }
+
+    .hud {
+      max-width: 400px;
+      margin: 0 auto 12px;
+      background: #2a2a3e;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hud span { color: #FFD700; font-weight: bold; }
+
+    #hudSingle {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    #hudMulti { display: none; }
+    #turnoBanner {
+      padding: 8px;
+      border-radius: 8px;
+      border: 2px solid #555;
+      font-weight: bold;
+      margin-bottom: 8px;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+    #marcadorJugadores {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      gap: 6px;
+    }
+    .jugador-card {
+      padding: 6px 8px;
+      background: #3a3a52;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      font-size: 0.75rem;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    .jugador-card.activo {
+      transform: scale(1.05);
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+      border-width: 2px;
+    }
+    .jugador-nombre {
+      font-weight: bold;
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .jugador-stats {
+      color: #ddd;
+      font-size: 0.7rem;
+      line-height: 1.3;
+    }
+
+    #hudTiempo {
+      display: none;
+      text-align: center;
+      padding: 4px 8px;
+      background: #1a1a2a;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    #tablero {
+      display: grid;
+      gap: 8px;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 400px;
+    }
+    .carta {
+      aspect-ratio: 1;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .carta:active { transform: scale(0.95); }
+
+    .reverso, .frente {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .reverso { font-size: 1.2rem; color: white; }
+
+    .reverso .img-reverso {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .reverso .numero {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .frente {
+      display: none;
+      background: #fff;
+      color: #000;
+    }
+    .frente .img-frente {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .carta.volteada .reverso { display: none; }
+    .carta.volteada .frente { display: flex; }
+    .carta.encontrada .frente::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 215, 0, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: #000;
+      border-radius: 8px;
+      font-weight: 900;
+    }
+    .carta.encontrada { cursor: default; }
+
+    #btnVolver {
+      margin-top: 12px;
+      padding: 10px 24px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #555;
+      color: white;
+      cursor: pointer;
+    }
+
+    #records {
+      max-width: 420px;
+      margin: 16px auto 0;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+    #records p { margin: 4px 0; }
+
+    /* ============ PANTALLA DE RESULTADOS ============ */
+    #pantallaResultados {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 35, 0.97);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    #pantallaResultados h1 {
+      font-size: 1.6rem;
+      margin: 0 0 8px;
+    }
+    #resultadosSubtitulo {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin: 0 0 20px;
+    }
+    #listaResultados {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .resultado-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #2a2a3e;
+      border: 2px solid #555;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: left;
+      transition: all 0.3s;
+    }
+    .resultado-item.ganador {
+      background: #3a3a2a;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    .resultado-pos {
+      font-size: 1.5rem;
+      width: 40px;
+      text-align: center;
+      flex-shrink: 0;
+      color: #FFD700;
+      font-weight: 900;
+    }
+    .resultado-info { flex: 1; }
+    .resultado-nombre {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .resultado-stats {
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+    .botones-finales {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .botones-finales button {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .botones-finales button:active { transform: scale(0.97); }
+    #btnRevancha {
+      background: #4CAF50;
+      color: white;
+    }
+    #btnTerminar {
+      background: #555;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============ BIENVENIDA ============ -->
+  <div id="bienvenida">
+    <h1>Bienvenido a<br>chino's app</h1>
+    <p>🎴 Prepárate para jugar…</p>
+  </div>
+
+  <!-- ============ MENÚ ============ -->
+  <div id="menu">
+    <h1>🧠 Chino's Memorama</h1>
+
+    <!-- Modo de juego -->
+    <div class="seccion">
+      <label>👥 Modo de juego</label>
+      <div class="opciones" id="opcModo">
+        <button data-modo="solo" class="activo">🎯 1 Jugador</button>
+        <button data-modo="multi">👥 Multijugador</button>
+      </div>
+      <div id="panelNumJugadores" style="display:none; margin-top:12px;">
+        <label>Número de jugadores</label>
+        <div class="opciones" id="opcNumJugadores">
+          <button data-num="2" class="activo">2</button>
+          <button data-num="3">3</button>
+          <button data-num="4">4</button>
+        </div>
+        <p class="ayuda" style="margin-top:8px;">Si aciertas un par, sigues jugando. Si fallas, pasa el turno al siguiente jugador.</p>
+      </div>
+    </div>
+
+    <!-- Dificultad + slider -->
+    <div class="seccion">
+      <label>🎯 Dificultad</label>
+      <div class="opciones" id="opcDificultad">
+        <button data-pairs="4">Fácil<br><small>4 parejas</small></button>
+        <button data-pairs="8">Medio<br><small>8 parejas</small></button>
+        <button data-pairs="16">Difícil<br><small>16 parejas</small></button>
+      </div>
+      <div style="margin-top:14px;">
+        <label>🃏 Número de parejas: <span id="numParejasDisplay">8</span></label>
+        <input type="range" id="rngParejas" min="4" max="50" step="1" value="8">
+        <div class="rango-etiquetas"><span>4</span><span>50</span></div>
+        <p id="estimadoTiempo" class="ayuda"></p>
+      </div>
+    </div>
+
+    <div class="seccion">
+      <label>⏱️ Temporizador</label>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <label class="switch">
+          <input type="checkbox" id="chkTemporizador">
+          <span class="slider"></span>
+        </label>
+        <span id="txtTemp">Desactivado</span>
+      </div>
+    </div>
+
+    <!-- Contenido de las tarjetas -->
+    <div class="seccion">
+      <label>🎴 Contenido de las tarjetas (frente)</label>
+      <div class="opciones" id="opcContenidoTipo">
+        <button data-tipo="emojis" class="activo">😀 Emojis</button>
+        <button data-tipo="imagenes">🖼️ Mis imágenes</button>
+      </div>
+
+      <div id="panelImagenesPropias" style="display:none; margin-top:12px;">
+        <p class="ayuda" style="margin-bottom:8px;">
+          Pega <b>una URL por línea</b>. Cada imagen se duplica para formar la pareja. Necesitas al menos tantas como parejas quieras jugar.
+        </p>
+        <textarea id="txtUrlsImagenes" placeholder="https://ejemplo.com/img1.jpg&#10;https://ejemplo.com/img2.jpg&#10;https://ejemplo.com/img3.jpg"></textarea>
+        <div id="contadorUrls"></div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="btnProbarTodas" style="padding:8px 14px; border:none; border-radius:8px; background:#2196F3; color:white; cursor:pointer;">🔍 Probar todas</button>
+        </div>
+        <div id="estadoImagenesPropias" style="margin-top:8px; font-size:0.85rem;"></div>
+      </div>
+    </div>
+
+    <!-- Reverso de las tarjetas -->
+    <div class="seccion">
+      <label>🎨 Reverso de las tarjetas (dorso)</label>
+      <div class="opciones" id="opcReversoTipo">
+        <button data-tipo="color" class="activo">🎨 Color</button>
+        <button data-tipo="imagen">🖼️ Imagen</button>
+        <button data-tipo="textura">✨ Textura</button>
+      </div>
+
+      <div id="panelReversoColor" style="margin-top:12px;">
+        <div class="colores" id="opcColoresReverso"></div>
+      </div>
+
+      <div id="panelReversoImagen" style="display:none; margin-top:12px;">
+        <input type="url" id="inputUrlReverso" placeholder="https://ejemplo.com/imagen.jpg">
+        <div style="margin-top:10px;">
+          <button id="btnProbarImagen" style="padding:8px 14px; border:none; border-radius:8px; background:#2196F3; color:white; cursor:pointer;">🔍 Probar imagen</button>
+        </div>
+        <div id="estadoImagen" style="margin-top:8px; font-size:0.85rem;"></div>
+        <p class="ayuda">Pega el enlace <b>directo</b> a la imagen. Ejemplo que sí funciona: <code>https://picsum.photos/200</code></p>
+      </div>
+
+      <div id="panelReversoTextura" style="display:none; margin-top:12px;">
+        <div class="texturas" id="opcTexturas"></div>
+      </div>
+
+      <div style="margin-top:14px; display:flex; align-items:center; gap:12px; padding-top:12px; border-top:1px solid #3a3a52;">
+        <label class="switch">
+          <input type="checkbox" id="chkNumeros" checked>
+          <span class="slider"></span>
+        </label>
+        <span>Mostrar numeración (1…N)</span>
+      </div>
+    </div>
+
+    <button id="btnEmpezar">▶️ Empezar juego</button>
+
+    <div id="records"></div>
+  </div>
+
+  <!-- ============ JUEGO ============ -->
+  <div id="juego">
+    <div class="hud">
+      <div id="hudSingle">
+        <div>Intentos: <span id="intentos">0</span></div>
+        <div>Parejas: <span id="hudParejas">0/0</span></div>
+      </div>
+      <div id="hudMulti">
+        <div id="turnoBanner">Turno: <span id="turnoNombre">Jugador 1</span></div>
+        <div id="marcadorJugadores"></div>
+      </div>
+      <div id="hudTiempo">⏱️ <span id="tiempo">0</span></div>
+    </div>
+    <div id="tablero"></div>
+    <button id="btnVolver">↩️ Volver al menú</button>
+  </div>
+
+  <!-- ============ RESULTADOS ============ -->
+  <div id="pantallaResultados">
+    <h1 id="resultadosTitulo">🏆 Resultados</h1>
+    <p id="resultadosSubtitulo"></p>
+    <div id="listaResultados"></div>
+    <div class="botones-finales">
+      <button id="btnRevancha">🔄 Revancha</button>
+      <button id="btnTerminar">🏠 Terminar juego</button>
+    </div>
+  </div>
+
+  <script>
+    /* ================= DATOS ================= */
+    const EMOJIS = [
+      '🍎','🍌','🍇','🍓','🍊','🍋','🍉','🥝','🍒','🍑',
+      '🍍','🥭','🍐','🍏','🥥','🍅','🥑','🌽','🍄','🥕',
+      '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯',
+      '🦁','🐮','🐷','🐸','🐵','🐔','🐧','🦆','🦉','🦄',
+      '🐝','🦋','🐢','🐬','🐳','🐙','🦀','🦈','🐊','🦒'
+    ];
+    const COLORES = [
+      '#4CAF50', '#E91E63', '#2196F3', '#FF9800',
+      '#9C27B0', '#00BCD4', '#F44336', '#607D8B'
+    ];
+    const COLORES_JUGADORES = ['#E91E63', '#2196F3', '#FF9800', '#9C27B0'];
+    const TEXTURAS = {
+      rayas: {
+        nombre: 'Rayas',
+        css: 'repeating-linear-gradient(45deg, #444 0, #444 10px, #666 10px, #666 20px)'
+      },
+      cuadros: {
+        nombre: 'Cuadros',
+        css: 'repeating-linear-gradient(0deg, #444 0, #444 12px, #666 12px, #666 24px), repeating-linear-gradient(90deg, #444 0, #444 12px, #666 12px, #666 24px)'
+      },
+      puntos: {
+        nombre: 'Puntos',
+        css: 'radial-gradient(#777 2px, transparent 2.5px) 0 0 / 16px 16px, #333'
+      },
+      zigzag: {
+        nombre: 'Zigzag',
+        css: 'repeating-linear-gradient(135deg, #3a3a4a 0, #3a3a4a 8px, #555 8px, #555 16px)'
+      }
+    };
+    const STORAGE = 'memorama_config_v5';
+    const STORAGE_RECORDS = 'memorama_records_v3';
+
+    let estado = {
+      pairs: 8,
+      temporizador: false,
+      reversoTipo: 'color',
+      reversoColor: '#4CAF50',
+      reversoImagenUrl: '',
+      reversoTextura: 'rayas',
+      mostrarNumeros: true,
+      contenidoTipo: 'emojis',
+      imagenesPropias: [],
+      modoMultijugador: false,
+      numJugadores: 2
+    };
+
+    let juego = {
+      baraja: [],
+      primera: null,
+      segunda: null,
+      bloqueo: false,
+      encontradas: 0,
+      totalParejas: 0,
+      tiempoRestante: 0,
+      intervalo: null,
+      activo: false,
+      modoMultijugador: false,
+      numJugadores: 1,
+      jugadores: [],
+      turnoActual: 0
+    };
+
+    /* ================= UTILIDADES ================= */
+    function tiempoParaParejas(pares) {
+      return Math.max(30, Math.round(pares * 7 + 20));
+    }
+    function formatTiempo(seg) {
+      if (seg >= 60) {
+        const m = Math.floor(seg / 60);
+        const s = seg % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      }
+      return `${seg}s`;
+    }
+    function parseUrls(texto) {
+      return (texto || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    }
+
+    /* ================= CONFIG ================= */
+    function cargarConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE));
+        if (saved) estado = { ...estado, ...saved };
+        estado.pairs = Math.min(50, Math.max(4, parseInt(estado.pairs) || 8));
+        estado.numJugadores = Math.min(4, Math.max(2, parseInt(estado.numJugadores) || 2));
+        if (!Array.isArray(estado.imagenesPropias)) estado.imagenesPropias = [];
+      } catch (e) {}
+    }
+    function guardarConfig() {
+      localStorage.setItem(STORAGE, JSON.stringify(estado));
+    }
+
+    /* ================= PINTAR MENÚ ================= */
+    function pintarModo() {
+      document.querySelectorAll('#opcModo button').forEach(b => {
+        b.classList.toggle('activo',
+          (b.dataset.modo === 'multi') === estado.modoMultijugador);
+      });
+      document.getElementById('panelNumJugadores').style.display =
+        estado.modoMultijugador ? 'block' : 'none';
+    }
+    function pintarNumJugadores() {
+      document.querySelectorAll('#opcNumJugadores button').forEach(b => {
+        b.classList.toggle('activo', parseInt(b.dataset.num) === estado.numJugadores);
+      });
+    }
+    function pintarParejas() {
+      document.getElementById('rngParejas').value = estado.pairs;
+      document.getElementById('numParejasDisplay').textContent = estado.pairs;
+      const t = tiempoParaParejas(estado.pairs);
+      document.getElementById('estimadoTiempo').textContent =
+        `Tiempo estimado si activas temporizador: ${formatTiempo(t)}`;
+
+      document.querySelectorAll('#opcDificultad button').forEach(b => {
+        b.classList.toggle('activo', parseInt(b.dataset.pairs) === estado.pairs);
+      });
+      actualizarContadorUrls();
+    }
+    function pintarTemporizador() {
+      document.getElementById('chkTemporizador').checked = estado.temporizador;
+      document.getElementById('txtTemp').textContent =
+        estado.temporizador ? 'Activado' : 'Desactivado';
+    }
+    function pintarContenidoTipo() {
+      document.querySelectorAll('#opcContenidoTipo button').forEach(b => {
+        b.classList.toggle('activo', b.dataset.tipo === estado.contenidoTipo);
+      });
+      document.getElementById('panelImagenesPropias').style.display =
+        estado.contenidoTipo === 'imagenes' ? 'block' : 'none';
+    }
+    function pintarReversoTipo() {
+      document.querySelectorAll('#opcReversoTipo button').forEach(b => {
+        b.classList.toggle('activo', b.dataset.tipo === estado.reversoTipo);
+      });
+      document.getElementById('panelReversoColor').style.display =
+        estado.reversoTipo === 'color' ? 'block' : 'none';
+      document.getElementById('panelReversoImagen').style.display =
+        estado.reversoTipo === 'imagen' ? 'block' : 'none';
+      document.getElementById('panelReversoTextura').style.display =
+        estado.reversoTipo === 'textura' ? 'block' : 'none';
+    }
+    function pintarColoresReverso() {
+      const cont = document.getElementById('opcColoresReverso');
+      cont.innerHTML = '';
+      COLORES.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'color-btn' + (c === estado.reversoColor ? ' activo' : '');
+        btn.style.background = c;
+        btn.addEventListener('click', () => {
+          estado.reversoColor = c;
+          guardarConfig();
+          pintarColoresReverso();
+        });
+        cont.appendChild(btn);
+      });
+    }
+    function pintarTexturas() {
+      const cont = document.getElementById('opcTexturas');
+      cont.innerHTML = '';
+      Object.entries(TEXTURAS).forEach(([key, t]) => {
+        const btn = document.createElement('button');
+        btn.className = 'textura-btn' + (key === estado.reversoTextura ? ' activo' : '');
+        btn.style.background = t.css;
+        btn.title = t.nombre;
+        btn.addEventListener('click', () => {
+          estado.reversoTextura = key;
+          guardarConfig();
+          pintarTexturas();
+        });
+        cont.appendChild(btn);
+      });
+    }
+    function pintarNumerosToggle() {
+      document.getElementById('chkNumeros').checked = estado.mostrarNumeros;
+    }
+    function actualizarContadorUrls() {
+      const el = document.getElementById('contadorUrls');
+      if (!el) return;
+      const urls = parseUrls(document.getElementById('txtUrlsImagenes').value);
+      const necesarias = estado.pairs;
+      if (urls.length >= necesarias) {
+        el.innerHTML = `✅ ${urls.length} URL(s) — suficiente para ${necesarias} parejas`;
+        el.style.color = '#4CAF50';
+      } else {
+        el.innerHTML = `⚠️ ${urls.length} de ${necesarias} URLs necesarias`;
+        el.style.color = '#FFD700';
+      }
+    }
+
+    /* ================= RÉCORDS (solo 1 jugador) ================= */
+    function cargarRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_RECORDS)) || {};
+      } catch (e) { return {}; }
+    }
+    function guardarRecord(intentos) {
+      const recs = cargarRecords();
+      const clave = `p${estado.pairs}` + (estado.temporizador ? '_t' : '');
+      const actual = recs[clave];
+      if (!actual || intentos < actual) {
+        recs[clave] = intentos;
+        localStorage.setItem(STORAGE_RECORDS, JSON.stringify(recs));
+        return true;
+      }
+      return false;
+    }
+    function pintarRecords() {
+      const recs = cargarRecords();
+      const claves = Object.keys(recs).sort((a, b) => {
+        const ma = a.match(/p(\d+)(_t)?/);
+        const mb = b.match(/p(\d+)(_t)?/);
+        if (!ma || !mb) return 0;
+        const pa = parseInt(ma[1]), pb = parseInt(mb[1]);
+        if (pa !== pb) return pa - pb;
+        return (ma[2] ? 1 : 0) - (mb[2] ? 1 : 0);
+      });
+      const cont = document.getElementById('records');
+      let html = '<h2>🏆 Récords (1 jugador)</h2>';
+      if (claves.length === 0) {
+        html += '<p>Aún no hay récords. ¡Juega y establece uno!</p>';
+      } else {
+        claves.forEach(k => {
+          const m = k.match(/p(\d+)(_t)?/);
+          if (!m) return;
+          html += `<p>${m[1]} parejas${m[2] ? ' + temporizador' : ''}: <b>${recs[k]}</b> intentos</p>`;
+        });
+      }
+      cont.innerHTML = html;
+    }
+
+    /* ================= ESTILO DEL REVERSO ================= */
+    function aplicarEstiloReverso(el) {
+      el.style.background = '';
+      const imgPrevia = el.querySelector('.img-reverso');
+      if (imgPrevia) imgPrevia.remove();
+
+      if (estado.reversoTipo === 'color') {
+        el.style.background = estado.reversoColor;
+      } else if (estado.reversoTipo === 'imagen') {
+        el.style.background = '#333';
+        if (estado.reversoImagenUrl) {
+          const img = document.createElement('img');
+          img.className = 'img-reverso';
+          img.alt = '';
+          img.src = estado.reversoImagenUrl;
+          img.onerror = () => {
+            img.remove();
+            el.style.background = '#c0392b';
+          };
+          el.insertBefore(img, el.firstChild);
+        }
+      } else if (estado.reversoTipo === 'textura') {
+        el.style.background = (TEXTURAS[estado.reversoTextura] || TEXTURAS.rayas).css;
+      }
+    }
+
+    /* ================= HUD / MARCADOR ================= */
+    function pintarHUD() {
+      const hudSingle = document.getElementById('hudSingle');
+      const hudMulti = document.getElementById('hudMulti');
+      if (juego.modoMultijugador) {
+        hudSingle.style.display = 'none';
+        hudMulti.style.display = 'block';
+        pintarTurno();
+        pintarMarcador();
+      } else {
+        hudSingle.style.display = 'flex';
+        hudMulti.style.display = 'none';
+      }
+    }
+    function pintarTurno() {
+      const j = juego.jugadores[juego.turnoActual];
+      const nombreEl = document.getElementById('turnoNombre');
+      nombreEl.textContent = j.nombre;
+      nombreEl.style.color = j.color;
+      const banner = document.getElementById('turnoBanner');
+      banner.style.borderColor = j.color;
+      banner.style.background = j.color + '22';
+    }
+    function pintarMarcador() {
+      const cont = document.getElementById('marcadorJugadores');
+      cont.innerHTML = '';
+      juego.jugadores.forEach((j, i) => {
+        const activo = i === juego.turnoActual;
+        const div = document.createElement('div');
+        div.className = 'jugador-card' + (activo ? ' activo' : '');
+        div.style.borderColor = j.color;
+        if (activo) div.style.background = j.color + '33';
+        div.innerHTML = `
+          <div class="jugador-nombre" style="color: ${j.color};">${j.nombre}</div>
+          <div class="jugador-stats">${j.parejas} pares · ${j.intentos} int.</div>
+        `;
+        cont.appendChild(div);
+      });
+    }
+    function actualizarHUD() {
+      if (juego.modoMultijugador) {
+        pintarMarcador();
+      } else {
+        const j = juego.jugadores[0];
+        document.getElementById('intentos').textContent = j.intentos;
+        document.getElementById('hudParejas').textContent =
+          `${j.parejas}/${juego.totalParejas}`;
+      }
+    }
+
+    /* ================= INICIAR JUEGO ================= */
+    function empezarJuego() {
+      const pares = estado.pairs;
+      let valoresUsar;
+
+      if (estado.contenidoTipo === 'emojis') {
+        valoresUsar = EMOJIS.slice(0, pares);
+      } else {
+        const urls = parseUrls(document.getElementById('txtUrlsImagenes').value);
+        if (urls.length < pares) {
+          alert(`Necesitas al menos ${pares} URLs de imágenes. Solo tienes ${urls.length}.`);
+          return;
+        }
+        valoresUsar = urls.slice(0, pares);
+        estado.imagenesPropias = urls;
+        guardarConfig();
+      }
+
+      juego.baraja = [...valoresUsar, ...valoresUsar].sort(() => Math.random() - 0.5);
+      juego.primera = juego.segunda = null;
+      juego.bloqueo = false;
+      juego.encontradas = 0;
+      juego.totalParejas = pares;
+      juego.tiempoRestante = tiempoParaParejas(pares);
+      juego.activo = true;
+
+      // Setup jugadores
+      juego.modoMultijugador = !!estado.modoMultijugador;
+      if (juego.modoMultijugador) {
+        juego.numJugadores = Math.min(4, Math.max(2, parseInt(estado.numJugadores) || 2));
+        juego.jugadores = [];
+        for (let i = 0; i < juego.numJugadores; i++) {
+          juego.jugadores.push({
+            nombre: `Jugador ${i + 1}`,
+            parejas: 0,
+            intentos: 0,
+            color: COLORES_JUGADORES[i]
+          });
+        }
+        juego.turnoActual = 0;
+      } else {
+        juego.numJugadores = 1;
+        juego.jugadores = [{ nombre: 'Jugador', parejas: 0, intentos: 0, color: '#FFD700' }];
+        juego.turnoActual = 0;
+      }
+
+      // Mostrar pantalla de juego
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('juego').style.display = 'block';
+      document.getElementById('pantallaResultados').style.display = 'none';
+      window.scrollTo(0, 0);
+
+      pintarHUD();
+      actualizarHUD();
+
+      // Timer
+      const hudTiempo = document.getElementById('hudTiempo');
+      clearInterval(juego.intervalo);
+      if (estado.temporizador) {
+        hudTiempo.style.display = 'block';
+        document.getElementById('tiempo').textContent = formatTiempo(juego.tiempoRestante);
+        iniciarTemporizador();
+      } else {
+        hudTiempo.style.display = 'none';
+      }
+
+      // Tablero
+      const totalCartas = pares * 2;
+      const columnas = Math.max(4, Math.ceil(Math.sqrt(totalCartas)));
+      const tablero = document.getElementById('tablero');
+      tablero.style.gridTemplateColumns = `repeat(${columnas}, 1fr)`;
+      tablero.style.maxWidth = pares > 15 ? '500px' : '400px';
+      tablero.innerHTML = '';
+
+      juego.baraja.forEach((valor, index) => {
+        const carta = document.createElement('div');
+        carta.className = 'carta';
+        carta.dataset.valor = valor;
+
+        const reverso = document.createElement('div');
+        reverso.className = 'reverso';
+        aplicarEstiloReverso(reverso);
+        if (estado.mostrarNumeros) {
+          const num = document.createElement('span');
+          num.className = 'numero';
+          num.textContent = index + 1;
+          reverso.appendChild(num);
+        }
+
+        const frente = document.createElement('div');
+        frente.className = 'frente';
+        if (estado.contenidoTipo === 'emojis') {
+          frente.textContent = valor;
+        } else {
+          const img = document.createElement('img');
+          img.className = 'img-frente';
+          img.src = valor;
+          img.alt = '';
+          img.onerror = () => {
+            img.remove();
+            frente.textContent = '❌';
+          };
+          frente.appendChild(img);
+        }
+
+        carta.appendChild(reverso);
+        carta.appendChild(frente);
+        carta.addEventListener('click', () => voltear(carta));
+        tablero.appendChild(carta);
+      });
+
+      setTimeout(() => {
+        const primera = document.querySelector('.carta');
+        if (!primera) return;
+        const w = primera.offsetWidth;
+        const frenteSize = Math.max(12, Math.min(44, w * 0.58));
+        const numSize = Math.max(9, Math.min(16, w * 0.32));
+        const circle = Math.max(18, Math.min(34, w * 0.5));
+        document.querySelectorAll('.frente').forEach(f => {
+          f.style.fontSize = frenteSize + 'px';
+        });
+        document.querySelectorAll('.numero').forEach(n => {
+          n.style.fontSize = numSize + 'px';
+          n.style.width = circle + 'px';
+          n.style.height = circle + 'px';
+        });
+      }, 30);
+    }
+
+    /* ================= TEMPORIZADOR ================= */
+    function iniciarTemporizador() {
+      clearInterval(juego.intervalo);
+      juego.intervalo = setInterval(() => {
+        if (!juego.activo) return;
+        juego.tiempoRestante--;
+        document.getElementById('tiempo').textContent = formatTiempo(juego.tiempoRestante);
+        if (juego.tiempoRestante <= 0) {
+          clearInterval(juego.intervalo);
+          terminarJuego(false);
+        }
+      }, 1000);
+    }
+
+    /* ================= VOLTEAR ================= */
+    function voltear(carta) {
+      if (!juego.activo || juego.bloqueo ||
+          carta.classList.contains('volteada') ||
+          carta.classList.contains('encontrada')) return;
+
+      carta.classList.add('volteada');
+
+      if (!juego.primera) {
+        juego.primera = carta;
+        return;
+      }
+      juego.segunda = carta;
+      juego.bloqueo = true;
+
+      const jugador = juego.jugadores[juego.turnoActual];
+      jugador.intentos++;
+      actualizarHUD();
+
+      if (juego.primera.dataset.valor === juego.segunda.dataset.valor) {
+        // Acierto
+        juego.primera.classList.add('encontrada');
+        juego.segunda.classList.add('encontrada');
+        juego.encontradas++;
+        jugador.parejas++;
+        actualizarHUD();
+        resetTurno();
+        if (juego.encontradas === juego.totalParejas) {
+          terminarJuego(true);
+        }
+      } else {
+        // Fallo
+        setTimeout(() => {
+          juego.primera.classList.remove('volteada');
+          juego.segunda.classList.remove('volteada');
+          resetTurno();
+          // Cambiar turno en multijugador
+          if (juego.modoMultijugador) {
+            juego.turnoActual = (juego.turnoActual + 1) % juego.numJugadores;
+            pintarTurno();
+            pintarMarcador();
+          }
+        }, 800);
+      }
+    }
+    function resetTurno() {
+      juego.primera = juego.segunda = null;
+      juego.bloqueo = false;
+    }
+
+    /* ================= FIN DEL JUEGO ================= */
+    function terminarJuego(gano) {
+      juego.activo = false;
+      clearInterval(juego.intervalo);
+
+      let nuevoRecord = false;
+      if (gano && !juego.modoMultijugador) {
+        nuevoRecord = guardarRecord(juego.jugadores[0].intentos);
+      }
+      mostrarResultados(gano, nuevoRecord);
+    }
+
+    function mostrarResultados(gano, nuevoRecord) {
+      const pantalla = document.getElementById('pantallaResultados');
+      const titulo = document.getElementById('resultadosTitulo');
+      const subtitulo = document.getElementById('resultadosSubtitulo');
+      const lista = document.getElementById('listaResultados');
+
+      const ranking = [...juego.jugadores].sort((a, b) => {
+        if (b.parejas !== a.parejas) return b.parejas - a.parejas;
+        return a.intentos - b.intentos;
+      });
+
+      if (juego.modoMultijugador) {
+        const ganador = ranking[0];
+        const empatados = ranking.filter(j =>
+          j.parejas === ganador.parejas && j.intentos === ganador.intentos).length;
+
+        if (gano) {
+          titulo.textContent = empatados > 1 ? '🤝 ¡Empate!' : `🏆 ¡Ganó ${ganador.nombre}!`;
+          subtitulo.textContent = 'Todos los pares encontrados';
+        } else {
+          titulo.textContent = '⏰ ¡Se acabó el tiempo!';
+          subtitulo.textContent = 'Resultados finales';
+        }
+      } else {
+        if (gano) {
+          titulo.textContent = '🎉 ¡Ganaste!';
+          subtitulo.textContent =
+            `Lo lograste en ${juego.jugadores[0].intentos} intentos` +
+            (nuevoRecord ? ' · 🏆 ¡Nuevo récord!' : '');
+        } else {
+          titulo.textContent = '⏰ ¡Se acabó el tiempo!';
+          subtitulo.textContent =
+            `Encontraste ${juego.jugadores[0].parejas} de ${juego.totalParejas} parejas`;
+        }
+      }
+
+      lista.innerHTML = '';
+      ranking.forEach((j, idx) => {
+        const esGanador = (idx === 0) && gano && juego.modoMultijugador;
+        const div = document.createElement('div');
+        div.className = 'resultado-item' + (esGanador ? ' ganador' : '');
+        div.style.borderColor = j.color;
+        let pos;
+        if (esGanador) pos = '🥇';
+        else if (juego.modoMultijugador) pos = `${idx + 1}º`;
+        else pos = '🎯';
+        div.innerHTML = `
+          <div class="resultado-pos">${pos}</div>
+          <div class="resultado-info">
+            <div class="resultado-nombre" style="color: ${j.color};">${j.nombre}</div>
+            <div class="resultado-stats">${j.parejas} parejas · ${j.intentos} intentos</div>
+          </div>
+        `;
+        lista.appendChild(div);
+      });
+
+      pantalla.style.display = 'flex';
+    }
+
+    /* ================= EVENTOS ================= */
+    document.getElementById('opcModo').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      estado.modoMultijugador = btn.dataset.modo === 'multi';
+      guardarConfig();
+      pintarModo();
+    });
+
+    document.getElementById('opcNumJugadores').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      estado.numJugadores = parseInt(btn.dataset.num);
+      guardarConfig();
+      pintarNumJugadores();
+    });
+
+    document.getElementById('opcDificultad').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      estado.pairs = parseInt(btn.dataset.pairs);
+      guardarConfig();
+      pintarParejas();
+    });
+
+    document.getElementById('rngParejas').addEventListener('input', e => {
+      estado.pairs = parseInt(e.target.value);
+      guardarConfig();
+      pintarParejas();
+    });
+
+    document.getElementById('chkTemporizador').addEventListener('change', e => {
+      estado.temporizador = e.target.checked;
+      guardarConfig();
+      pintarTemporizador();
+    });
+
+    document.getElementById('opcContenidoTipo').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      estado.contenidoTipo = btn.dataset.tipo;
+      guardarConfig();
+      pintarContenidoTipo();
+    });
+
+    document.getElementById('txtUrlsImagenes').addEventListener('input', () => {
+      const urls = parseUrls(document.getElementById('txtUrlsImagenes').value);
+      estado.imagenesPropias = urls;
+      guardarConfig();
+      actualizarContadorUrls();
+    });
+
+    document.getElementById('btnProbarTodas').addEventListener('click', () => {
+      const urls = parseUrls(document.getElementById('txtUrlsImagenes').value);
+      const estadoDiv = document.getElementById('estadoImagenesPropias');
+      if (urls.length === 0) {
+        estadoDiv.textContent = '⚠️ No hay URLs para probar.';
+        estadoDiv.style.color = '#FFD700';
+        return;
+      }
+      estadoDiv.innerHTML = `⏳ Probando ${urls.length} URLs...`;
+      estadoDiv.style.color = '#aaa';
+
+      let completadas = 0, ok = 0, fail = 0;
+      urls.forEach(url => {
+        const img = new Image();
+        const timeout = setTimeout(() => {
+          fail++; completadas++; actualizar();
+        }, 5000);
+        img.onload = () => { clearTimeout(timeout); ok++; completadas++; actualizar(); };
+        img.onerror = () => { clearTimeout(timeout); fail++; completadas++; actualizar(); };
+        img.src = url;
+      });
+      function actualizar() {
+        if (completadas === urls.length) {
+          if (fail === 0) {
+            estadoDiv.innerHTML = `✅ Las ${ok} imágenes cargaron correctamente.`;
+            estadoDiv.style.color = '#4CAF50';
+          } else {
+            estadoDiv.innerHTML = `⚠️ ${ok} OK, ${fail} con problemas (${urls.length} total).`;
+            estadoDiv.style.color = '#F44336';
+          }
+        } else {
+          estadoDiv.innerHTML = `⏳ Probando... ${completadas}/${urls.length}`;
+        }
+      }
+    });
+
+    document.getElementById('opcReversoTipo').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      estado.reversoTipo = btn.dataset.tipo;
+      guardarConfig();
+      pintarReversoTipo();
+    });
+
+    document.getElementById('chkNumeros').addEventListener('change', e => {
+      estado.mostrarNumeros = e.target.checked;
+      guardarConfig();
+    });
+
+    document.getElementById('inputUrlReverso').addEventListener('input', e => {
+      estado.reversoImagenUrl = e.target.value.trim();
+      guardarConfig();
+    });
+
+    document.getElementById('btnProbarImagen').addEventListener('click', () => {
+      const url = document.getElementById('inputUrlReverso').value.trim();
+      const estadoDiv = document.getElementById('estadoImagen');
+      if (!url) {
+        estadoDiv.innerHTML = '⚠️ Escribe una URL primero.';
+        estadoDiv.style.color = '#FFD700';
+        return;
+      }
+      estadoDiv.innerHTML = '⏳ Probando…';
+      estadoDiv.style.color = '#aaa';
+
+      const testImg = new Image();
+      const timeout = setTimeout(() => {
+        testImg.src = '';
+        estadoDiv.innerHTML = '❌ Timeout: la imagen tardó demasiado o está bloqueada.';
+        estadoDiv.style.color = '#F44336';
+      }, 6000);
+      testImg.onload = () => {
+        clearTimeout(timeout);
+        estadoDiv.innerHTML = `✅ Imagen cargada (${testImg.naturalWidth}×${testImg.naturalHeight}px)`;
+        estadoDiv.style.color = '#4CAF50';
+        estado.reversoImagenUrl = url;
+        guardarConfig();
+      };
+      testImg.onerror = () => {
+        clearTimeout(timeout);
+        estadoDiv.innerHTML = '❌ No se pudo cargar. Verifica que sea un link directo.';
+        estadoDiv.style.color = '#F44336';
+      };
+      testImg.src = url;
+    });
+
+    document.getElementById('btnEmpezar').addEventListener('click', empezarJuego);
+
+    document.getElementById('btnVolver').addEventListener('click', () => {
+      juego.activo = false;
+      clearInterval(juego.intervalo);
+      document.getElementById('juego').style.display = 'none';
+      document.getElementById('menu').style.display = 'block';
+      pintarRecords();
+    });
+
+    document.getElementById('btnRevancha').addEventListener('click', () => {
+      document.getElementById('pantallaResultados').style.display = 'none';
+      empezarJuego();
+    });
+
+    document.getElementById('btnTerminar').addEventListener('click', () => {
+      document.getElementById('pantallaResultados').style.display = 'none';
+      document.getElementById('juego').style.display = 'none';
+      document.getElementById('menu').style.display = 'block';
+      pintarRecords();
+    });
+
+    /* ================= BIENVENIDA ================= */
+    setTimeout(() => {
+      const b = document.getElementById('bienvenida');
+      b.classList.add('oculto');
+      setTimeout(() => { b.style.display = 'none'; }, 900);
+    }, 3000);
+
+    /* ================= INIT ================= */
+    cargarConfig();
+    pintarModo();
+    pintarNumJugadores();
+    pintarParejas();
+    pintarTemporizador();
+    pintarContenidoTipo();
+    pintarReversoTipo();
+    pintarColoresReverso();
+    pintarTexturas();
+    pintarNumerosToggle();
+    document.getElementById('inputUrlReverso').value = estado.reversoImagenUrl || '';
+    document.getElementById('txtUrlsImagenes').value = estado.imagenesPropias.join('\n');
+    actualizarContadorUrls();
+    pintarRecords();
+
+    /* ================= SERVICE WORKER ================= */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('SW registrado'))
+          .catch(err => console.log('Error SW:', err));
+      });
+    }
+  </script>
+</body>
+</html>
